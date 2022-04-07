@@ -22,9 +22,13 @@ import { UserInterface } from "../pages";
 const app = express();
 
 app.use(cors());
+<<<<<<< HEAD
 
 // app.use(express.json);
 
+=======
+// app.use(express.json);
+>>>>>>> 977077d5fb7d508eece20520b4bcc24a26db8365
 app.use(passport.initialize());
 
 app.post("/upload", uploader.single("photo"), (req, res) => {
