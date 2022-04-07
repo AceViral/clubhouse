@@ -20,18 +20,16 @@ export const GitHubStep: React.FC = () => {
    };
 
    React.useEffect(() => {
-      if (typeof window != "undefined") {
-         window.addEventListener("message", ({ data, origin }) => {
-            const user: string = data;
-            if (typeof user === "string" && user.includes("avatarUrl")) {
-               // Cookies.remove("token");
-               const json = JSON.parse(user);
-               setUserData(json);
-               // Cookies.set("token", json.token);
-               onNextStep();
-            }
-         });
-      }
+      window.addEventListener("message", ({ data, origin }) => {
+         const user: string = data;
+         if (typeof user === "string" && user.includes("avatarUrl")) {
+            // Cookies.remove("token");
+            const json = JSON.parse(user);
+            setUserData(json);
+            // Cookies.set("token", json.token);
+            onNextStep();
+         }
+      });
    }, []);
    return (
       <div className={styles.block}>
