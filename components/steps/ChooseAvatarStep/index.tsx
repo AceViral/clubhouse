@@ -26,9 +26,8 @@ export const ChooseAvatarStep: React.FC = () => {
    const { onNextStep, setFieldValue, userData } =
       React.useContext(MainContext);
 
-   const [avatarUrl, setAvatarUrl] = React.useState<string>(
-      "https://cdn-icons.flaticon.com/png/512/4140/premium/4140048.png?token=exp=1649250140~hmac=8e4d6e9134b103a86a560550c81b5989"
-   );
+   const [avatarUrl, setAvatarUrl] =
+      React.useState<string>("/static/person.png");
    const inputFileRef = React.useRef<HTMLInputElement>(null);
 
    const handleChangeImage = async (event: Event) => {
