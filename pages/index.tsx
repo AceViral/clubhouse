@@ -51,7 +51,7 @@ export default function Home() {
          [field]: value,
       }));
    };
-   console.log(userData);
+   // console.log(userData);
    return (
       <MainContext.Provider
          value={{ step, onNextStep, userData, setUserData, setFieldValue }}

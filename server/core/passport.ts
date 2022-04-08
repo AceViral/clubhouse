@@ -1,21 +1,21 @@
 import passport from "passport";
 import { Strategy as GitHubStrategy } from "passport-github2";
-// import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
+import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
 import { User } from "../../models";
 import { UserInterface } from "../../pages";
 import { createJwtToken } from "../../utils/createJwtToken";
 
-// const opts = {
-//    jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-//    secretOrKey: process.env.JWT_SECRET_KEY,
-// };
+const opts = {
+   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+   secretOrKey: process.env.JWT_SECRET_KEY,
+};
 
-// passport.use(
-//    "jwt",
-//    new JwtStrategy(opts, (jwt_payload, done) => {
-//       done(null, jwt_payload.data);
-//    })
-// );
+passport.use(
+   "jwt",
+   new JwtStrategy(opts, (jwt_payload, done) => {
+      done(null, jwt_payload.data);
+   })
+);
 
 passport.use(
    "github",
@@ -27,10 +27,9 @@ passport.use(
       },
       async (_: unknown, __: unknown, profile, done) => {
          try {
-            // let userData: UserInterface;
+            let userData: UserInterface;
 
-            // const obj: Omit<UserInterface, "id"> = {
-            const obj = {
+            const obj: Omit<UserInterface, "id"> = {
                fullname: profile.displayName,
                avatarUrl: profile.photos?.[0].value,
                isActive: 0,
@@ -46,18 +45,15 @@ passport.use(
 
             if (!findUser) {
                const userProfile = await User.create(obj);
-               return done(null, userProfile.toJSON());
-               // userData = userProfile.toJSON();
+               userData = userProfile.toJSON();
+            } else {
+               userData = await findUser.toJSON();
             }
-            // else {
-            //    userData = await findUser.toJSON();
-            // }
 
-            done(null, findUser);
-            // done(null, {
-            //    ...userData,
-            //    token: createJwtToken(userData),
-            // });
+            done(null, {
+               ...userData,
+               token: createJwtToken(userData),
+            });
          } catch (error) {
             done(error);
          }
@@ -71,7 +67,7 @@ passport.serializeUser(function (user, done) {
 
 passport.deserializeUser(function (id, done) {
    User.findById(id, function (err, user) {
-      err ? done(err) : done(null, user);
+      err ? done(err, user) : done(null, user);
    });
 });
 

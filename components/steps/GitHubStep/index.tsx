@@ -1,12 +1,12 @@
 import clsx from "clsx";
-// import Cookies from 'js-cookie';
+import Cookies from "js-cookie";
 import { WhiteBlock } from "../../WhiteBlock";
 import { Button } from "../../Button";
 import { StepInfo } from "../../StepInfo";
 
 import styles from "./GitHubStep.module.scss";
 import React from "react";
-import { MainContext } from "../../../pages";
+import { MainContext, UserInterface } from "../../../pages";
 
 export const GitHubStep: React.FC = () => {
    const { onNextStep, setUserData } = React.useContext(MainContext);
@@ -24,9 +24,9 @@ export const GitHubStep: React.FC = () => {
          const user: string = data;
          if (typeof user === "string" && user.includes("avatarUrl")) {
             // Cookies.remove("token");
-            const json = JSON.parse(user);
+            const json: UserInterface = JSON.parse(user);
             setUserData(json);
-            // Cookies.set("token", json.token);
+            Cookies.set("token", json.token);
             onNextStep();
          }
       });
