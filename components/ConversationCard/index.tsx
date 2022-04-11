@@ -1,36 +1,38 @@
-/* eslint-disable @next/next/no-img-element */
 import React from "react";
 import { Avatar } from "../Avatar";
 
 import styles from "./ConversationCard.module.scss";
 import whiteBlockStyles from "../WhiteBlock/WhiteBlock.module.scss";
 import clsx from "clsx";
-import { UserData } from "../../pages";
 
 interface ConversationCard {
    title: string;
-   speakers: UserData[];
-   listenersCount: number;
+   guests: string[];
+   avatars: string[];
+   guestsCount: number;
+   speakersCount: number;
 }
 
 export const ConversationCard: React.FC<ConversationCard> = ({
    title,
-   speakers = [],
-   listenersCount,
+   guests = [],
+   avatars = [],
+   guestsCount,
+   speakersCount,
 }) => {
    return (
       <div className={clsx(whiteBlockStyles.block, styles.card, "mb-30")}>
          <h4 className={styles.title}>{title}</h4>
          <div className={clsx("d-flex mt-10", styles.content)}>
             <div className={styles.avatars}>
-               {speakers.map((user, i) => (
+               {avatars.map((url, i) => (
                   <Avatar
-                     key={user.avatarUrl}
+                     key={url}
                      width="45px"
                      height="45px"
-                     src={user.avatarUrl}
+                     src={url}
                      className={
-                        speakers.length > 1 && i === speakers.length - 1
+                        avatars.length > 1 && i === avatars.length - 1
                            ? "lastAvatar"
                            : ""
                      }
@@ -39,9 +41,9 @@ export const ConversationCard: React.FC<ConversationCard> = ({
             </div>
             <div className={clsx(styles.info, "ml-10")}>
                <ul className={styles.users}>
-                  {speakers.map((user, i) => (
-                     <li key={user.id}>
-                        {user.fullname}
+                  {guests.map((name, i) => (
+                     <li key={name + i}>
+                        {name}{" "}
                         <img
                            src="/static/cloud.png"
                            alt="Cloud"
@@ -53,15 +55,16 @@ export const ConversationCard: React.FC<ConversationCard> = ({
                </ul>
                <ul className={styles.details}>
                   <li>
+                     {guestsCount}{" "}
                      <img
                         src="/static/user.svg"
                         alt="Users count"
                         width={12}
                         height={12}
                      />
-                     {listenersCount}
                   </li>
                   <li>
+                     {speakersCount}
                      <img
                         className="ml-5"
                         src="/static/message.svg"
@@ -69,7 +72,6 @@ export const ConversationCard: React.FC<ConversationCard> = ({
                         width={12}
                         height={12}
                      />
-                     {speakers.length}
                   </li>
                </ul>
             </div>

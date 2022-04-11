@@ -23,14 +23,15 @@ export default function RoomPage({ room }) {
 export const getServerSideProps = async (ctx) => {
    try {
       const { data } = await Axios.get("/rooms.json");
-      const room = data.find((obj) => obj.speakers[0].id === ctx.query.id);
+      const roomId = ctx.query.id;
+      const room = data.find((obj) => obj.id === roomId);
       return {
          props: {
             room,
          },
       };
    } catch (error) {
-      console.log("ERROR in rooms/[id].tsx");
+      console.log("ERROR!");
       return {
          props: {
             rooms: [],

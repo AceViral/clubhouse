@@ -5,6 +5,7 @@ import { ChooseAvatarStep } from "../components/steps/ChooseAvatarStep";
 import { EnterPhoneStep } from "../components/steps/EnterPhoneStep";
 import { EnterCodeStep } from "../components/steps/EnterCodeStep";
 import { GitHubStep } from "../components/steps/GitHubStep";
+import { checkAuth } from "../utils/checkAuth";
 
 const stepsComponents = {
    0: WelcomeStep,
@@ -36,6 +37,26 @@ export const MainContext = React.createContext<MainContextProps>(
    {} as MainContextProps
 );
 
+const getUserData = (): UserInterface | null => {
+   try {
+      return JSON.parse(window.localStorage.getItem("userData"));
+   } catch (error) {
+      return null;
+   }
+};
+
+const getFormStep = (): number => {
+   const json = getUserData();
+   if (json) {
+      if (json.phone) {
+         return 5;
+      } else {
+         return 4;
+      }
+   }
+   return 0;
+};
+
 export default function Home() {
    const [step, setStep] = React.useState<number>(0);
    const [userData, setUserData] = React.useState<UserInterface>();
@@ -51,7 +72,24 @@ export default function Home() {
          [field]: value,
       }));
    };
-   // console.log(userData);
+
+   React.useEffect(() => {
+      if (typeof window !== "undefined") {
+         const json = getUserData();
+         if (json) {
+            setUserData(json);
+            setStep(getFormStep());
+         }
+      }
+   }, []);
+
+   React.useEffect(() => {
+      window.localStorage.setItem(
+         "userData",
+         userData ? JSON.stringify(userData) : ""
+      );
+   }, [userData]);
+
    return (
       <MainContext.Provider
          value={{ step, onNextStep, userData, setUserData, setFieldValue }}
@@ -60,3 +98,21 @@ export default function Home() {
       </MainContext.Provider>
    );
 }
+
+export const getServerSideProps = async (ctx) => {
+   try {
+      const user = await checkAuth(ctx);
+
+      if (user) {
+         return {
+            props: {},
+            redirect: {
+               destination: "/rooms",
+               permanent: false,
+            },
+         };
+      }
+   } catch (err) {}
+
+   return { props: {} };
+};
