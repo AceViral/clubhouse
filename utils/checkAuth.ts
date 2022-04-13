@@ -1,18 +1,12 @@
 import { GetServerSidePropsContext } from "next";
-import Cookies from "nookies";
-import { UserApi } from "../api/UserApi";
-import { Axios } from "../core/axios";
-import { UserData } from "../pages";
+import { Api } from "../api";
+import { UserInterface } from "../pages";
 
 export const checkAuth = async (
    ctx: GetServerSidePropsContext
-): Promise<UserData | null> => {
+): Promise<UserInterface | null> => {
    try {
-      const cookies = Cookies.get(ctx);
-      if (cookies.token) {
-         Axios.defaults.headers.Authorization = `Bearer ${cookies.token}`;
-      }
-      return await UserApi.getMe();
+      return await Api(ctx).getMe();
    } catch (error) {
       return null;
    }

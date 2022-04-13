@@ -6,6 +6,8 @@ import { EnterPhoneStep } from "../components/steps/EnterPhoneStep";
 import { EnterCodeStep } from "../components/steps/EnterCodeStep";
 import { GitHubStep } from "../components/steps/GitHubStep";
 import { checkAuth } from "../utils/checkAuth";
+import { Axios } from "../core/axios";
+import { Api } from "../api";
 
 const stepsComponents = {
    0: WelcomeStep,
@@ -25,6 +27,7 @@ export type UserInterface = {
    phone: string;
    token?: string;
 };
+
 type MainContextProps = {
    onNextStep: () => void;
    setUserData: React.Dispatch<React.SetStateAction<UserInterface>>;
@@ -84,10 +87,10 @@ export default function Home() {
    }, []);
 
    React.useEffect(() => {
-      window.localStorage.setItem(
-         "userData",
-         userData ? JSON.stringify(userData) : ""
-      );
+      if (userData) {
+         window.localStorage.setItem("userData", JSON.stringify(userData));
+         Axios.defaults.headers.Authorization = "Bearer " + userData.token;
+      }
    }, [userData]);
 
    return (
@@ -102,7 +105,7 @@ export default function Home() {
 export const getServerSideProps = async (ctx) => {
    try {
       const user = await checkAuth(ctx);
-
+      Api(ctx).getMe();
       if (user) {
          return {
             props: {},

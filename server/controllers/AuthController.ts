@@ -1,4 +1,3 @@
-import React from "react";
 import express from "express";
 import { Code, User } from "../../models";
 import { generateRandomCode } from "../../utils/generateRandomCode";
@@ -9,7 +8,6 @@ class AuthController {
    }
 
    authCallBack(req: express.Request, res: express.Response) {
-      console.log("error");
       res.send(
          `<script>
          window.opener.postMessage('${JSON.stringify(req.user)}','*');
