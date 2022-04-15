@@ -18,13 +18,13 @@ class AuthController {
 
    async activate(req: express.Request, res: express.Response) {
       const userId = req.user.id;
-      const smsCode = req.query.code;
+      const { code, user } = req.body;
 
-      if (!smsCode) {
+      if (!code) {
          return res.status(400).json({ message: "Введите код активации" });
       }
 
-      const whereQuery = { code: smsCode, user_id: userId };
+      const whereQuery = { code, user_id: userId };
 
       try {
          const findCode = await Code.findOne({
@@ -34,7 +34,10 @@ class AuthController {
             await Code.destroy({
                where: whereQuery,
             });
-            await User.update({ isActive: 1 }, { where: { id: userId } });
+            await User.update(
+               { ...user, isActive: 1 },
+               { where: { id: userId } }
+            );
             return res.send();
          } else {
             res.status(400).json({
@@ -51,8 +54,8 @@ class AuthController {
    async sensSMS(req: express.Request, res: express.Response) {
       const phone = req.query.phone;
       const userId = req.user.id;
-      const smsCode = generateRandomCode();
-
+      // const smsCode = generateRandomCode();
+      const smsCode = 1234;
       if (!phone) {
          return res.status(400).json({
             message: "Номер телефона не указан",

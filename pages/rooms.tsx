@@ -1,21 +1,23 @@
 import { Button } from "../components/Button";
 import { Header } from "../components/Header";
 import { ConversationCard } from "../components/ConversationCard";
+import { StartRoomModal } from "../components/StartRoomModal";
 import Link from "next/link";
-import React, { useState } from "react";
+import React from "react";
 import Head from "next/head";
 import { checkAuth } from "../utils/checkAuth";
-import { StartRoomModal } from "../components/StartRoomModal";
 import { Api } from "../api";
-import { Room } from "../api/RoomApi";
 import { GetServerSideProps, NextPage } from "next";
+import { useSelector } from "react-redux";
+import { selectRooms } from "../redux/selectors";
+import { wrapper } from "../redux/store";
+import { setRooms } from "../redux/slices/roomsSlice";
+// import { setUserData } from "../redux/slices/userSlice";
 
-interface RoomPageProps {
-   rooms: Room[];
-}
-
-const RoomPage: NextPage<RoomPageProps> = ({ rooms }) => {
+const RoomsPage: NextPage = () => {
    const [visibleModal, setVisibleModal] = React.useState(false);
+   const rooms = useSelector(selectRooms);
+
    return (
       <>
          <Head>
@@ -29,14 +31,13 @@ const RoomPage: NextPage<RoomPageProps> = ({ rooms }) => {
          <div className="container">
             <div className=" mt-40 d-flex align-items-center justify-content-between">
                <h1>All conversations</h1>
-               <Button color="green" onClick={() => setVisibleModal(true)}>
+               <Button onClick={() => setVisibleModal(true)} color="green">
                   + Start room
                </Button>
             </div>
             {visibleModal && (
                <StartRoomModal onClose={() => setVisibleModal(false)} />
             )}
-
             <div className="grid mt-30">
                {rooms.map((obj) => (
                   <Link key={obj.id} href={`/rooms/${obj.id}`}>
@@ -56,36 +57,34 @@ const RoomPage: NextPage<RoomPageProps> = ({ rooms }) => {
    );
 };
 
-export const getServerSideProps: GetServerSideProps<RoomPageProps> = async (
-   ctx
-) => {
-   try {
-      const user = await checkAuth(ctx);
-      if (!user) {
+export const getServerSideProps: GetServerSideProps =
+   wrapper.getServerSideProps((store) => async (ctx) => {
+      try {
+         const user = await checkAuth(ctx);
+
+         if (!user) {
+            return {
+               props: {},
+               redirect: {
+                  permanent: false,
+                  destination: "/",
+               },
+            };
+         }
+
+         const rooms = await Api(ctx).getRooms();
+         store.dispatch(setRooms(rooms));
          return {
             props: {},
-            redirect: {
-               permanent: false,
-               destination: "/",
+         };
+      } catch (error) {
+         console.log("ERROR!");
+         return {
+            props: {
+               rooms: [],
             },
          };
       }
+   });
 
-      const rooms = await Api(ctx).getRooms();
-
-      return {
-         props: {
-            rooms,
-         },
-      };
-   } catch (error) {
-      console.log("ERROR in rooms.tsx!");
-      return {
-         props: {
-            rooms: [],
-         },
-      };
-   }
-};
-
-export default RoomPage;
+export default RoomsPage;

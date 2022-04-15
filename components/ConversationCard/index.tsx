@@ -1,6 +1,6 @@
+/* eslint-disable @next/next/no-img-element */
 import React from "react";
 import { Avatar } from "../Avatar";
-
 import styles from "./ConversationCard.module.scss";
 import whiteBlockStyles from "../WhiteBlock/WhiteBlock.module.scss";
 import clsx from "clsx";
