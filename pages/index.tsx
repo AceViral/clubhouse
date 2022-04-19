@@ -8,8 +8,10 @@ import { GitHubStep } from "../components/steps/GitHubStep";
 import { checkAuth } from "../utils/checkAuth";
 import { Axios } from "../core/axios";
 import { Api } from "../api";
+import { GetServerSideProps } from "next";
+import { wrapper } from "../redux/store";
 
-const stepsComponents = {
+const stepsComponents: any = {
    0: WelcomeStep,
    1: GitHubStep,
    2: EnterNameStep,
@@ -42,7 +44,7 @@ export const MainContext = React.createContext<MainContextProps>(
 
 const getUserData = (): UserInterface | null => {
    try {
-      return JSON.parse(window.localStorage.getItem("userData"));
+      return JSON.parse(String(window.localStorage.getItem("userData")));
    } catch (error) {
       return null;
    }
@@ -102,20 +104,21 @@ export default function Home() {
    );
 }
 
-export const getServerSideProps = async (ctx) => {
-   try {
-      const user = await checkAuth(ctx);
-      Api(ctx).getMe();
-      if (user) {
-         return {
-            props: {},
-            redirect: {
-               destination: "/rooms",
-               permanent: false,
-            },
-         };
-      }
-   } catch (err) {}
+export const getServerSideProps: GetServerSideProps =
+   wrapper.getServerSideProps((store) => async (ctx) => {
+      try {
+         const user = await checkAuth(ctx, store);
+         Api(ctx).getMe();
+         if (user) {
+            return {
+               props: {},
+               redirect: {
+                  destination: "/rooms",
+                  permanent: false,
+               },
+            };
+         }
+      } catch (err) {}
 
-   return { props: {} };
-};
+      return { props: {} };
+   });

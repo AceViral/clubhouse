@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext, useState } from "react";
 import clsx from "clsx";
 import { useRouter } from "next/router";
 import { WhiteBlock } from "../../WhiteBlock";
@@ -6,11 +6,13 @@ import { StepInfo } from "../../StepInfo";
 import { Axios } from "../../../core/axios";
 
 import styles from "./EnterPhoneStep.module.scss";
+import { MainContext } from "../../../pages";
 
 export const EnterCodeStep = () => {
    const router = useRouter();
-   const [isLoading, setIsLoading] = React.useState<boolean>(false);
-   const [codes, setCodes] = React.useState(["", "", "", ""]);
+   const { userData } = useContext(MainContext);
+   const [isLoading, setIsLoading] = useState<boolean>(false);
+   const [codes, setCodes] = useState(["", "", "", ""]);
 
    const handleChangeInput = (event: React.ChangeEvent<HTMLInputElement>) => {
       const index = Number(event.target.getAttribute("id"));
@@ -30,7 +32,10 @@ export const EnterCodeStep = () => {
    const onSubmit = async (code: string) => {
       try {
          setIsLoading(true);
-         await Axios.get(`/auth/sms/activate?code=${code}`);
+         await Axios.post(`/auth/sms/activate`, {
+            code,
+            user: userData,
+         });
          router.push("/rooms");
       } catch (error) {
          alert("Ошибка при активации!");

@@ -17,7 +17,7 @@ class AuthController {
    }
 
    async activate(req: express.Request, res: express.Response) {
-      const userId = req.user.id;
+      const userId = req.user?.id;
       const { code, user } = req.body;
 
       if (!code) {
@@ -53,7 +53,7 @@ class AuthController {
 
    async sensSMS(req: express.Request, res: express.Response) {
       const phone = req.query.phone;
-      const userId = req.user.id;
+      const userId = req.user?.id;
       // const smsCode = generateRandomCode();
       const smsCode = 1234;
       if (!phone) {

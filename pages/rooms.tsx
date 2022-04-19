@@ -12,7 +12,6 @@ import { useSelector } from "react-redux";
 import { selectRooms } from "../redux/selectors";
 import { wrapper } from "../redux/store";
 import { setRooms } from "../redux/slices/roomsSlice";
-// import { setUserData } from "../redux/slices/userSlice";
 
 const RoomsPage: NextPage = () => {
    const [visibleModal, setVisibleModal] = React.useState(false);
@@ -60,8 +59,7 @@ const RoomsPage: NextPage = () => {
 export const getServerSideProps: GetServerSideProps =
    wrapper.getServerSideProps((store) => async (ctx) => {
       try {
-         const user = await checkAuth(ctx);
-
+         const user = await checkAuth(ctx, store);
          if (!user) {
             return {
                props: {},
@@ -73,7 +71,9 @@ export const getServerSideProps: GetServerSideProps =
          }
 
          const rooms = await Api(ctx).getRooms();
+
          store.dispatch(setRooms(rooms));
+
          return {
             props: {},
          };

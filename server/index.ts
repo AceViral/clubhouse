@@ -11,8 +11,14 @@ dotenv.config({
 import "./core/db";
 import { passport } from "./core/passport";
 import { uploader } from "./core/uploader";
+import { createServer } from "http";
+import socket from "socket.io";
 
 const app = express();
+const server = createServer(app);
+const io = socket(server, {
+   cors: { origin: "*" },
+});
 
 app.use(cors());
 // app.use(express.json);
@@ -57,7 +63,7 @@ app.get(
    AuthController.sensSMS
 );
 app.get("/auth/github", passport.authenticate("github"));
-app.get(
+app.post(
    "/auth/sms/activate",
    passport.authenticate("jwt", { session: false }),
    AuthController.activate
@@ -70,8 +76,10 @@ app.get(
 
 // UPLOAD ========================================
 app.post("/upload", uploader.single("photo"), (req, res) => {
-   const filePath = req.file.path;
-
+   const filePath = req.file?.path;
+   if (!filePath) {
+      throw new Error("Uppload photo error");
+   }
    sharp(filePath)
       .resize(150, 150)
       .toFormat("jpeg")
@@ -83,11 +91,36 @@ app.post("/upload", uploader.single("photo"), (req, res) => {
          fs.unlinkSync(filePath);
 
          res.json({
-            url: `/avatars/${req.file.filename.replace(".png", ".jpeg")}`,
+            url: `/avatars/${req.file?.filename.replace(".png", ".jpeg")}`,
          });
       });
 });
+// SOCKETS =======================================
+const rooms: Record<string, any> = {};
 
-app.listen(3001, () => {
+io.on("connection", (socket) => {
+   console.log("SOCKETS", socket.id);
+
+   socket.on("CLIENT@ROOMS:JOIN", ({ user, roomId }) => {
+      socket.join(`room/${roomId}`);
+      rooms[socket.id] = { roomId, user };
+      socket.broadcast.to(`room/${roomId}`).emit(
+         "SERVER@ROOMS:JOIN",
+         Object.values(rooms)
+            .filter((obj) => obj.roomId === roomId)
+            .map((obj) => obj.user)
+      );
+   });
+
+   socket.on("disconnect", () => {
+      if (rooms[socket.id]) {
+         const { roomId, user } = rooms[socket.id];
+         socket.broadcast.to(`room/${roomId}`).emit("SERVER@ROOMS:LEAVE", user);
+         delete rooms[socket.id];
+      }
+   });
+});
+
+server.listen(3001, () => {
    console.log("SERVER STARTED");
 });

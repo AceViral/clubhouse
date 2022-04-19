@@ -1,16 +1,15 @@
+import React, { useEffect, useRef } from "react";
 import clsx from "clsx";
 import Link from "next/link";
-import React from "react";
-// import Peer from "simple-peer";
-import { useRouter } from "next/router";
 import { Button } from "../Button";
-import { Speaker } from "../Speaker";
-
+import { Speaker, SpeakerProps } from "../Speaker";
 import styles from "./Room.module.scss";
-// import { selectUserData } from "../../redux/selectors";
-// import { useSelector } from "react-redux";
-import { UserData } from "../../pages";
-// import { useSocket } from "../../hooks/useSocket";
+import io, { Socket } from "socket.io-client";
+import { useRouter } from "next/router";
+import { selectUserData } from "../../redux/selectors";
+import { useSelector } from "react-redux";
+import { UserInterface } from "../../pages";
+// import Peer from "simple-peer";
 
 interface RoomProps {
    title: string;
@@ -19,12 +18,41 @@ interface RoomProps {
 let peers = [];
 
 export const Room: React.FC<RoomProps> = ({ title }) => {
+   const [users, setUsers] = React.useState<UserInterface[]>([]);
+
    const router = useRouter();
-   //  const user = useSelector(selectUserData);
-   const [users, setUsers] = React.useState<UserData[]>([]);
+
+   const user = useSelector(selectUserData);
    const roomId = router.query.id;
+
+   const socketRef = useRef<Socket>();
+
    //  const socket = useSocket();
 
+   useEffect(() => {
+      if (typeof window !== "undefined") {
+         socketRef.current = io("http://localhost:3001");
+
+         socketRef.current.emit("CLIENT@ROOMS:JOIN", {
+            roomId,
+            user,
+         });
+
+         socketRef.current.on("SERVER@ROOMS:LEAVE", (user: UserInterface) => {
+            setUsers((prev) => prev.filter((obj) => obj.id !== user.id));
+         });
+
+         socketRef.current.on("SERVER@ROOMS:JOIN", (allUsers) => {
+            setUsers(allUsers);
+         });
+
+         // setUsers((prev) => [...prev, user]);
+      }
+
+      return () => {
+         socketRef.current?.disconnect();
+      };
+   }, []);
    // React.useEffect(() => {
    //   if (typeof window !== 'undefined') {
    //     navigator.mediaDevices

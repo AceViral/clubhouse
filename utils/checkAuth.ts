@@ -1,9 +1,8 @@
-import { AnyAction, CombinedState, Store } from "@reduxjs/toolkit";
-import { GetServerSidePropsContext } from "next";
-import { ParsedUrlQuery } from "node:querystring";
+import { Store } from "@reduxjs/toolkit";
+import { GetServerSidePropsContext } from "next/types";
 import { Api } from "../api";
 import { UserInterface } from "../pages";
-// import { setUserData } from "../redux/slices/userSlice";
+import { setUserData } from "../redux/slices/userSlice";
 import { RootState } from "../redux/types";
 
 // TODO: Типизировать
@@ -22,11 +21,12 @@ import { RootState } from "../redux/types";
 //    }
 // };
 export const checkAuth = async (
-   ctx: GetServerSidePropsContext
+   ctx: GetServerSidePropsContext,
+   store: Store<RootState>
 ): Promise<UserInterface | null> => {
    try {
       const user = await Api(ctx).getMe();
-      // store.dispatch(setUserData(user));
+      store.dispatch(setUserData(user));
       return user;
    } catch (error) {
       return null;
