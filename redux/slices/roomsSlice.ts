@@ -1,7 +1,8 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { HYDRATE } from "next-redux-wrapper";
-import { Room, RoomApi, RoomType } from "../../api/RoomApi";
+import { Room, RoomApi, RoomType, UserWithRoomId } from "../../api/RoomApi";
 import { Axios } from "../../core/axios";
+import { UserInterface } from "../../pages";
 import { RootState } from "../types";
 
 export type RoomsSliceState = {
@@ -34,6 +35,17 @@ export const roomsSlice = createSlice({
       setRooms: (state, action: PayloadAction<Room[]>) => {
          state.items = action.payload;
       },
+      setRoomSpeakers: (
+         state,
+         action: PayloadAction<{ speakers: Room["speakers"]; roomId: number }>
+      ) => {
+         state.items = state.items.map((room) => {
+            if (room.id === action.payload.roomId) {
+               room.speakers = action.payload.speakers;
+            }
+            return room;
+         });
+      },
    },
    extraReducers: (builder) =>
       builder
@@ -48,5 +60,5 @@ export const roomsSlice = createSlice({
          }),
 });
 
-export const { setRooms } = roomsSlice.actions;
+export const { setRooms, setRoomSpeakers } = roomsSlice.actions;
 export const roomsReducer = roomsSlice.reducer;

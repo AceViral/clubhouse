@@ -1,9 +1,12 @@
 import { AxiosInstance } from "axios";
+import { UserInterface } from "../pages";
+
+export type UserWithRoomId = UserInterface & { roomId: number };
 
 export interface Room {
    id: number;
    title: string;
-   speakers: any[];
+   speakers: UserWithRoomId[];
    listenersCount: number;
 }
 

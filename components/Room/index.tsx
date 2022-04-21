@@ -4,11 +4,11 @@ import Link from "next/link";
 import { Button } from "../Button";
 import { Speaker, SpeakerProps } from "../Speaker";
 import styles from "./Room.module.scss";
-import io, { Socket } from "socket.io-client";
 import { useRouter } from "next/router";
 import { selectUserData } from "../../redux/selectors";
 import { useSelector } from "react-redux";
 import { UserInterface } from "../../pages";
+import { useSocket } from "../../hooks/useSocket";
 // import Peer from "simple-peer";
 
 interface RoomProps {
@@ -25,24 +25,20 @@ export const Room: React.FC<RoomProps> = ({ title }) => {
    const user = useSelector(selectUserData);
    const roomId = router.query.id;
 
-   const socketRef = useRef<Socket>();
-
-   //  const socket = useSocket();
+   const socket = useSocket();
 
    useEffect(() => {
       if (typeof window !== "undefined") {
-         socketRef.current = io("http://localhost:3001");
-
-         socketRef.current.emit("CLIENT@ROOMS:JOIN", {
+         socket.emit("CLIENT@ROOMS:JOIN", {
             roomId,
             user,
          });
 
-         socketRef.current.on("SERVER@ROOMS:LEAVE", (user: UserInterface) => {
+         socket.on("SERVER@ROOMS:LEAVE", (user: UserInterface) => {
             setUsers((prev) => prev.filter((obj) => obj.id !== user.id));
          });
 
-         socketRef.current.on("SERVER@ROOMS:JOIN", (allUsers) => {
+         socket.on("SERVER@ROOMS:JOIN", (allUsers) => {
             setUsers(allUsers);
          });
 
@@ -50,7 +46,7 @@ export const Room: React.FC<RoomProps> = ({ title }) => {
       }
 
       return () => {
-         socketRef.current?.disconnect();
+         socket.disconnect();
       };
    }, []);
    // React.useEffect(() => {
