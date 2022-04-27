@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from "react";
+/* eslint-disable @next/next/no-img-element */
+import React, { useEffect, useState } from "react";
 import clsx from "clsx";
 import Link from "next/link";
 import { Button } from "../Button";
@@ -9,7 +10,7 @@ import { selectUserData } from "../../redux/selectors";
 import { useSelector } from "react-redux";
 import { UserInterface } from "../../pages";
 import { useSocket } from "../../hooks/useSocket";
-// import Peer from "simple-peer";
+import Peer from "simple-peer";
 
 interface RoomProps {
    title: string;
@@ -18,7 +19,7 @@ interface RoomProps {
 let peers = [];
 
 export const Room: React.FC<RoomProps> = ({ title }) => {
-   const [users, setUsers] = React.useState<UserInterface[]>([]);
+   const [users, setUsers] = useState<UserInterface[]>([]);
 
    const router = useRouter();
 
@@ -27,11 +28,71 @@ export const Room: React.FC<RoomProps> = ({ title }) => {
 
    const socket = useSocket();
 
-   useEffect(() => {
+   React.useEffect(() => {
       if (typeof window !== "undefined") {
+         navigator.mediaDevices
+            .getUserMedia({
+               audio: true,
+            })
+            .then((stream) => {
+               const peerIncome = new Peer({
+                  initiator: true,
+                  trickle: false,
+                  stream,
+               });
+
+               peerIncome.on("signal", (signal) => {
+                  socket.emit("CLIENT@ROOMS:CALL", {
+                     user,
+                     roomId,
+                     signal,
+                  });
+               });
+
+               socket.on(
+                  "SERVER@ROOMS:CALL",
+                  ({ user: callerUser, signal }) => {
+                     console.log(user, signal, "ПРИШЕЛ СИГШНГАЩФЫВЛ!");
+
+                     const peerOutcome = new Peer({
+                        initiator: false,
+                        trickle: false,
+                        stream,
+                     });
+
+                     peerOutcome.signal(signal);
+
+                     peerOutcome
+                        .on("stream", (stream) => {
+                           document.querySelector("audio").srcObject = stream;
+                           document.querySelector("audio").play();
+                           console.log("STREAM", stream);
+                        })
+                        .on("signal", (signal) => {
+                           console.log(callerUser);
+                           socket.emit("CLIENT@ROOMS:ANSWER", {
+                              targetUserId: callerUser.id,
+                              roomId,
+                              signal,
+                           });
+                        });
+                  }
+               );
+
+               socket.on("SERVER@ROOMS:ANSWER", ({ targetUserId, signal }) => {
+                  if (user.id === targetUserId) {
+                     peerIncome.signal(signal);
+                     console.log("МЫ ОТВЕТИЛИ ЮЗЕРУ", targetUserId);
+                  }
+               });
+            })
+            .catch(() => {
+               console.error("Нет доступа к микрофону");
+            });
+
          socket.emit("CLIENT@ROOMS:JOIN", {
-            roomId,
             user,
+            roomId,
          });
 
          socket.on("SERVER@ROOMS:LEAVE", (user: UserInterface) => {
@@ -39,133 +100,15 @@ export const Room: React.FC<RoomProps> = ({ title }) => {
          });
 
          socket.on("SERVER@ROOMS:JOIN", (allUsers) => {
+            console.log(allUsers);
             setUsers(allUsers);
          });
-
-         // setUsers((prev) => [...prev, user]);
       }
-
-      return () => {
-         socket.disconnect();
-      };
    }, []);
-   // React.useEffect(() => {
-   //   if (typeof window !== 'undefined') {
-   //     navigator.mediaDevices
-   //       .getUserMedia({
-   //         audio: true,
-   //       })
-   //       .then((stream) => {
-   //         socket.emit('CLIENT@ROOMS:JOIN', {
-   //           user,
-   //           roomId,
-   //         });
-
-   //         socket.on('SERVER@ROOMS:JOIN', (allUsers: UserData[]) => {
-   //           console.log(allUsers);
-
-   //           setUsers(allUsers);
-
-   //           allUsers.forEach((speaker) => {
-   //             if (user.id !== speaker.id && !peers.find((obj) => obj.id !== speaker.id)) {
-   //               const peerIncome = new Peer({
-   //                 initiator: true,
-   //                 trickle: false,
-   //                 stream,
-   //               });
-
-   //               // Получили сигнал от ICE-сервера и просим всех участников позвонить мне
-   //               peerIncome.on('signal', (signal) => {
-   //                 console.log(signal, 222);
-   //                 console.log(
-   //                   '1. СИГНАЛ СОЗДАН. ПРОСИМ ЮЗЕРА ' + speaker.fullname + ' НАМ ПОЗВОНИТЬ',
-   //                 );
-   //                 socket.emit('CLIENT@ROOMS:CALL', {
-   //                   targetUserId: speaker.id,
-   //                   callerUserId: user.id,
-   //                   roomId,
-   //                   signal,
-   //                 });
-   //                 peers.push({
-   //                   peer: peerIncome,
-   //                   id: speaker.id,
-   //                 });
-   //               });
-
-   //               socket.on(
-   //                 'SERVER@ROOMS:CALL',
-   //                 ({ targetUserId, callerUserId, signal: callerSignal }) => {
-   //                   console.log('2. ЮЗЕР ' + callerUserId + ' ПОДКЛЮЧИЛСЯ, ЗВОНИМ!');
-
-   //                   const peerOutcome = new Peer({
-   //                     initiator: false,
-   //                     trickle: false,
-   //                     stream,
-   //                   });
-
-   //                   // Звоним человеку м ждём сигнал, который нам необходимо передать обратно юзеру на ответ
-   //                   peerOutcome.signal(callerSignal);
-
-   //                   peerOutcome
-   //                     // Получаем сигнал от ICE-сервера и отправляем его юзеру, чтобы он получил наш сигнал для соединения
-   //                     .on('signal', (outSignal) => {
-   //                       console.log(
-   //                         '3. ПОЛУЧИЛИ СИГНАЛ НАШ, ОТПРАВЛЯЕМ В ОТВЕТ ЮЗЕРУ ' + callerUserId,
-   //                       );
-   //                       socket.emit('CLIENT@ROOMS:ANSWER', {
-   //                         targetUserId: callerUserId,
-   //                         callerUserId: targetUserId,
-   //                         roomId,
-   //                         signal: outSignal,
-   //                       });
-   //                     })
-   //                     // Когда нам ответили, воспроизводим звук
-   //                     .on('stream', (stream) => {
-   //                       document.querySelector('audio').srcObject = stream;
-   //                       document.querySelector('audio').play();
-   //                     });
-   //                 },
-   //               );
-
-   //               socket.on('SERVER@ROOMS:ANSWER', ({ callerUserId, signal }) => {
-   //                 const obj = peers.find((obj) => Number(obj.id) === Number(callerUserId));
-   //                 if (obj) {
-   //                   obj.peer.signal(signal);
-   //                 }
-   //                 console.log('4. МЫ ОТВЕТИЛИ ЮЗЕРУ', callerUserId);
-   //               });
-   //             }
-   //           });
-   //         });
-
-   //         socket.on('SERVER@ROOMS:LEAVE', (leaveUser: UserData) => {
-   //           console.log(leaveUser.id, peers);
-   //           setUsers((prev) =>
-   //             prev.filter((prevUser) => {
-   //               const peerUser = peers.find((obj) => Number(obj.id) === Number(leaveUser.id));
-   //               if (peerUser) {
-   //                 peerUser.peer.destroy();
-   //               }
-   //               return prevUser.id !== leaveUser.id;
-   //             }),
-   //           );
-   //         });
-   //       })
-   //       .catch(() => {
-   //         console.error('Нет доступа к микрофону');
-   //       });
-   //   }
-
-   //   return () => {
-   //     peers.forEach((obj) => {
-   //       obj.peer.destroy();
-   //     });
-   //   };
-   // }, []);
 
    return (
       <div className={styles.wrapper}>
-         {/* <audio controls />ё */}
+         <audio controls />
          <div className="d-flex align-items-center justify-content-between">
             <h2>{title}</h2>
             <div

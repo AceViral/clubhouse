@@ -36,6 +36,7 @@
       "react-redux": "^7.2.8",
       "sequelize": "^6.17.0",
       "sharp": "^0.30.3",
+      "simple-peer": "^9.11.1",
       "socket.io": "^4.4.1",
       "socket.io-client": "^4.4.1",
       "ts-node-dev": "^1.1.8"
@@ -51,6 +52,7 @@
       "@types/passport-jwt": "^3.0.6",
       "@types/react": "^17.0.43",
       "@types/sharp": "^0.30.1",
+      "@types/simple-peer": "^9.11.4",
       "eslint": "8.12.0",
       "eslint-config-next": "12.1.1",
       "sequelize-cli": "^6.4.1",
